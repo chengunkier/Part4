@@ -37,18 +37,9 @@ describe('total likes', () => {
 
   test('of a bigger list is calculated right', () => {
     const blogs = [
-      {
-        title: 'First blog',
-        likes: 5
-      },
-      {
-        title: 'Second blog',
-        likes: 10
-      },
-      {
-        title: 'Third blog',
-        likes: 7
-      }
+      { title: 'First blog', likes: 5 },
+      { title: 'Second blog', likes: 10 },
+      { title: 'Third blog', likes: 7 }
     ]
 
     const result = listHelper.totalLikes(blogs)
@@ -91,6 +82,35 @@ describe('favorite blog', () => {
       author: 'Mary',
       url: 'second.com',
       likes: 12
+    })
+  })
+})
+
+describe('most blogs', () => {
+  const blogs = [
+    {
+      title: 'Blog 1',
+      author: 'Robert C. Martin',
+      likes: 5
+    },
+    {
+      title: 'Blog 2',
+      author: 'Robert C. Martin',
+      likes: 10
+    },
+    {
+      title: 'Blog 3',
+      author: 'Edsger W. Dijkstra',
+      likes: 7
+    }
+  ]
+
+  test('author with most blogs is returned correctly', () => {
+    const result = listHelper.mostBlogs(blogs)
+
+    assert.deepStrictEqual(result, {
+      author: 'Robert C. Martin',
+      blogs: 2
     })
   })
 })
