@@ -4,13 +4,13 @@ const initialBlogs = [
   {
     title: 'First blog',
     author: 'John Doe',
-    url: 'http://example.com/1',
+    url: 'www.first.com',
     likes: 5
   },
   {
     title: 'Second blog',
     author: 'Jane Doe',
-    url: 'http://example.com/2',
+    url: 'www.second.com',
     likes: 10
   }
 ]
