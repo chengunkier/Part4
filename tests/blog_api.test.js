@@ -24,18 +24,17 @@ test('blogs are returned as json', async () => {
 test('all blogs are returned', async () => {
   const response = await api.get('/api/blogs')
 
-  assert.strictEqual(
-    response.body.length,
-    helper.initialBlogs.length
-  )
+  assert.strictEqual(response.body.length, helper.initialBlogs.length)
 })
 
-test('unique identifier property of blog posts is named id', async () => {
+// 3. check id field exists (MAIN TASK 4.9)
+test('blogs have id field instead of _id', async () => {
   const response = await api.get('/api/blogs')
 
-  const blog = response.body[0]
-
-  assert(blog.id !== undefined)
+  response.body.forEach(blog => {
+    assert.strictEqual(blog._id, undefined)
+    assert.strictEqual(blog.id !== undefined, true)
+  })
 })
 
 after(async () => {

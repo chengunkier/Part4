@@ -1,10 +1,16 @@
+
 GET http://localhost:3003/api/blogs
+Content-Type: application/json
+
+###
+
+POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 
 {
   "title": "Testi",
-  "author": "Chengunkier",
+  "author": "Lamba chahe",
   "url": "www.testi.com",
   "likes": 5
 }
