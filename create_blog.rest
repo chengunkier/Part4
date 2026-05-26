@@ -14,3 +14,8 @@ Content-Type: application/json
   "url": "www.testi.com",
   "likes": 5
 }
+
+###
+
+DELETE http://localhost:3003/api/blogs/6a159094a956585daf52d45b
+Content-Type: application/json
