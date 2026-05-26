@@ -9,11 +9,11 @@ const helper = require('./test_helper.test')
 
 const api = supertest(app)
 
-
 beforeEach(async () => {
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
 })
+
 
 test('blogs are returned as json', async () => {
   await api
@@ -56,7 +56,6 @@ test('a valid blog can be added', async () => {
 
   const blogsAtEnd = await helper.blogsInDb()
 
-  // number increased by one
   assert.strictEqual(
     blogsAtEnd.length,
     helper.initialBlogs.length + 1
@@ -65,6 +64,22 @@ test('a valid blog can be added', async () => {
   const titles = blogsAtEnd.map(blog => blog.title)
 
   assert(titles.includes('Async Await Testing'))
+})
+
+test('if likes property is missing, it defaults to 0', async () => {
+  const newBlog = {
+    title: 'Blog Without Likes',
+    author: 'Zach',
+    url: 'www.nolikes.com'
+  }
+
+  const response = await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(response.body.likes, 0)
 })
 
 after(async () => {

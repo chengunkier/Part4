@@ -6,7 +6,6 @@ blogsRouter.get('/', async (request, response) => {
   response.json(blogs)
 })
 
-// POST new blog
 blogsRouter.post('/', async (request, response) => {
   const body = request.body
 
@@ -14,6 +13,8 @@ blogsRouter.post('/', async (request, response) => {
     title: body.title,
     author: body.author,
     url: body.url,
+
+    // if likes missing → set to 0
     likes: body.likes || 0
   })
 
