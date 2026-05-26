@@ -121,6 +121,41 @@ describe('when there are initially some blogs saved', () => {
         .expect(204)
     })
   })
+
+  describe('updating a blog', () => {
+    test('succeeds updating likes with a valid id', async () => {
+      const blogsAtStart = await helper.blogsInDb()
+      const blogToUpdate = blogsAtStart[0]
+
+      const updatedData = { ...blogToUpdate, likes: blogToUpdate.likes + 1 }
+
+      const response = await api
+        .put(`/api/blogs/${blogToUpdate.id}`)
+        .send(updatedData)
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+
+      assert.strictEqual(response.body.likes, blogToUpdate.likes + 1)
+    })
+
+    test('fails with status 400 if id is invalid', async () => {
+      const invalidId = '5a3d5da59070081a82a3445'
+
+      await api
+        .put(`/api/blogs/${invalidId}`)
+        .send({ likes: 99 })
+        .expect(400)
+    })
+
+    test('fails with status 404 if blog does not exist', async () => {
+      const validNonexistingId = await helper.nonExistingId()
+
+      await api
+        .put(`/api/blogs/${validNonexistingId}`)
+        .send({ likes: 99 })
+        .expect(404)
+    })
+  })
 })
 
 after(async () => {
