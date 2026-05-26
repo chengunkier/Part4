@@ -9,10 +9,9 @@ Content-Type: application/json
 
 
 {
-  "title": "Testi",
-  "author": "Lamba chahe",
-  "url": "www.testi.com",
-  "likes": 5
+  "username": "johndoe",
+  "name": "John Doe",
+  "password": "password123"
 }
 
 ###

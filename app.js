@@ -6,6 +6,7 @@ const middleware = require('./utils/middleware')
 const logger = require('./utils/logger')
 
 const blogsRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
 
 const app = express()
 
@@ -13,7 +14,11 @@ mongoose.set('strictQuery', false)
 
 logger.info('connecting to', config.MONGODB_URI)
 
-mongoose.connect(config.MONGODB_URI)
+mongoose.connect(config.MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  family: 4
+})
   .then(() => {
     logger.info('connected to MongoDB')
   })
@@ -23,7 +28,10 @@ mongoose.connect(config.MONGODB_URI)
 
 app.use(express.json())
 app.use(middleware.requestLogger)
+
 app.use('/api/blogs', blogsRouter)
+app.use('/api/users', usersRouter)
+
 app.use(middleware.errorHandler)
 
 module.exports = app
