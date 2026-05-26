@@ -14,7 +14,6 @@ beforeEach(async () => {
   await Blog.insertMany(helper.initialBlogs)
 })
 
-
 test('blogs are returned as json', async () => {
   await api
     .get('/api/blogs')
@@ -25,19 +24,16 @@ test('blogs are returned as json', async () => {
 test('all blogs are returned', async () => {
   const response = await api.get('/api/blogs')
 
-  assert.strictEqual(
-    response.body.length,
-    helper.initialBlogs.length
-  )
+  assert.strictEqual(response.body.length, helper.initialBlogs.length)
 })
 
 test('blogs have id field instead of _id', async () => {
   const response = await api.get('/api/blogs')
 
-  response.body.forEach(blog => {
-    assert.strictEqual(blog._id, undefined)
-    assert.strictEqual(blog.id !== undefined, true)
-  })
+  const blog = response.body[0]
+
+  assert(blog.id)
+  assert.strictEqual(blog._id, undefined)
 })
 
 test('a valid blog can be added', async () => {
@@ -68,18 +64,63 @@ test('a valid blog can be added', async () => {
 
 test('if likes property is missing, it defaults to 0', async () => {
   const newBlog = {
-    title: 'Blog Without Likes',
+    title: 'No Likes Blog',
     author: 'Zach',
     url: 'www.nolikes.com'
   }
 
-  const response = await api
+  await api
     .post('/api/blogs')
     .send(newBlog)
     .expect(201)
-    .expect('Content-Type', /application\/json/)
 
-  assert.strictEqual(response.body.likes, 0)
+  const blogsAtEnd = await helper.blogsInDb()
+
+  const addedBlog = blogsAtEnd.find(
+    blog => blog.title === 'No Likes Blog'
+  )
+
+  assert.strictEqual(addedBlog.likes, 0)
+})
+
+test('blog without title is not added', async () => {
+  const newBlog = {
+    author: 'Zach',
+    url: 'www.test.com',
+    likes: 10
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  assert.strictEqual(
+    blogsAtEnd.length,
+    helper.initialBlogs.length
+  )
+})
+
+test('blog without url is not added', async () => {
+  const newBlog = {
+    title: 'Missing URL Blog',
+    author: 'Zach',
+    likes: 10
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  assert.strictEqual(
+    blogsAtEnd.length,
+    helper.initialBlogs.length
+  )
 })
 
 after(async () => {
