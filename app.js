@@ -13,29 +13,18 @@ const app = express()
 
 mongoose.set('strictQuery', false)
 
-logger.info('connecting to', config.MONGODB_URI)
-
 mongoose.connect(config.MONGODB_URI)
   .then(() => logger.info('connected to MongoDB'))
-  .catch(err => {
-    logger.error('error connecting to MongoDB:', err.message)
-    process.exit(1) // Exit the process if the database connection fails
-  })
+  .catch(err => logger.error(err.message))
 
 app.use(express.json())
 app.use(middleware.requestLogger)
-
 app.use(middleware.tokenExtractor)
 
-app.use('/api/login', loginRouter)
-app.use('/api/users', usersRouter)
 app.use('/api/blogs', blogsRouter)
+app.use('/api/users', usersRouter)
+app.use('/api/login', loginRouter)
 
 app.use(middleware.errorHandler)
-
-// Catch-all for unknown endpoints
-app.use((req, res) => {
-  res.status(404).send({ error: 'unknown endpoint' })
-})
 
 module.exports = app
