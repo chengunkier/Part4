@@ -2,7 +2,6 @@ const { test, after, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
-const jwt = require('jsonwebtoken')
 
 const app = require('../app')
 const Blog = require('../models/blog')
@@ -12,42 +11,41 @@ const helper = require('./test_helper.test')
 
 const api = supertest(app)
 
-/* helper: get auth token */
-const getToken = async () => {
-  const login = await api
-    .post('/api/login')
-    .send({
-      username: 'root',
-      password: 'sekret',
-    })
+let token = ''
 
-  return login.body.token
-}
+beforeEach(async () => {
+  await Blog.deleteMany({})
+  await User.deleteMany({})
 
-describe('when there are initially some blogs saved', () => {
-  beforeEach(async () => {
-    await Blog.deleteMany({})
-    await User.deleteMany({})
-
-    const user = new User({
-      username: 'root',
-      name: 'Superuser',
-      passwordHash: 'sekret',
-    })
-
-    const savedUser = await user.save()
-
-    const blogObjects = helper.initialBlogs.map((blog) => {
-      return new Blog({
-        ...blog,
-        user: savedUser._id,
-      })
-    })
-
-    const promiseArray = blogObjects.map((blog) => blog.save())
-    await Promise.all(promiseArray)
+  // create user
+  const user = await api.post('/api/users').send({
+    username: 'root',
+    name: 'Superuser',
+    password: 'sekret',
   })
 
+  // login to get token
+  const loginRes = await api.post('/api/login').send({
+    username: 'root',
+    password: 'sekret',
+  })
+
+  token = loginRes.body.token
+
+  // create initial blogs
+  const userInDb = await User.findOne({ username: 'root' })
+
+  const blogObjects = helper.initialBlogs.map(blog => {
+    return new Blog({
+      ...blog,
+      user: userInDb._id,
+    })
+  })
+
+  await Blog.insertMany(blogObjects)
+})
+
+describe('when there are initially some blogs saved', () => {
   test('blogs are returned as json', async () => {
     await api
       .get('/api/blogs')
@@ -62,24 +60,18 @@ describe('when there are initially some blogs saved', () => {
 
   test('blogs have id field instead of _id', async () => {
     const response = await api.get('/api/blogs')
-
-    const blog = response.body[0]
-
-    assert(blog.id)
-    assert.strictEqual(blog._id, undefined)
+    assert(response.body[0].id)
+    assert.strictEqual(response.body[0]._id, undefined)
   })
 
   describe('addition of a new blog', () => {
-    test('succeeds with valid data', async () => {
-      const token = await getToken()
-      const users = await helper.usersInDb()
 
+    test('succeeds with valid data', async () => {
       const newBlog = {
         title: 'Async Await Testing',
         author: 'Zach',
         url: 'www.async.com',
         likes: 15,
-        user: users[0].id,
       }
 
       await api
@@ -88,23 +80,15 @@ describe('when there are initially some blogs saved', () => {
         .send(newBlog)
         .expect(201)
 
-      const blogsAtEnd = await helper.blogsInDb()
-
-      assert.strictEqual(
-        blogsAtEnd.length,
-        helper.initialBlogs.length + 1
-      )
+      const blogsAtEnd = await Blog.find({})
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
     })
 
     test('if likes property is missing, it defaults to 0', async () => {
-      const token = await getToken()
-      const users = await helper.usersInDb()
-
       const newBlog = {
         title: 'No Likes Blog',
         author: 'Zach',
         url: 'www.nolikes.com',
-        user: users[0].id,
       }
 
       const response = await api
@@ -117,14 +101,10 @@ describe('when there are initially some blogs saved', () => {
     })
 
     test('fails with status 400 if title is missing', async () => {
-      const token = await getToken()
-      const users = await helper.usersInDb()
-
       const newBlog = {
         author: 'Zach',
         url: 'www.test.com',
         likes: 10,
-        user: users[0].id,
       }
 
       await api
@@ -135,14 +115,10 @@ describe('when there are initially some blogs saved', () => {
     })
 
     test('fails with status 400 if url is missing', async () => {
-      const token = await getToken()
-      const users = await helper.usersInDb()
-
       const newBlog = {
         title: 'Missing URL Blog',
         author: 'Zach',
         likes: 10,
-        user: users[0].id,
       }
 
       await api

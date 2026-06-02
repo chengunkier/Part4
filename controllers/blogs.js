@@ -13,11 +13,9 @@ blogsRouter.get('/', async (request, response) => {
   response.json(blogs)
 })
 
-/* CREATE BLOG (TOKEN REQUIRED) */
 blogsRouter.post('/', async (request, response) => {
   const body = request.body
 
-  // token comes from middleware
   const token = request.token
 
   if (!token) {
@@ -25,23 +23,21 @@ blogsRouter.post('/', async (request, response) => {
   }
 
   let decodedToken
-
   try {
     decodedToken = jwt.verify(token, process.env.SECRET)
   } catch (error) {
     return response.status(401).json({ error: 'token invalid' })
   }
 
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token invalid' })
+  const user = await User.findById(decodedToken.id)
+
+  if (!user) {
+    return response.status(401).json({ error: 'user not found' })
   }
 
-  // validation rules
   if (!body.title || !body.url) {
     return response.status(400).json({ error: 'title or url missing' })
   }
-
-  const user = await User.findById(decodedToken.id)
 
   const blog = new Blog({
     title: body.title,
@@ -53,20 +49,42 @@ blogsRouter.post('/', async (request, response) => {
 
   const savedBlog = await blog.save()
 
-  // link blog to user
   user.blogs = user.blogs.concat(savedBlog._id)
   await user.save()
 
   response.status(201).json(savedBlog)
 })
 
-/* DELETE BLOG */
 blogsRouter.delete('/:id', async (request, response) => {
+  const token = request.token
+
+  if (!token) {
+    return response.status(401).json({ error: 'token missing' })
+  }
+
+  let decodedToken
+  try {
+    decodedToken = jwt.verify(token, process.env.SECRET)
+  } catch (error) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
+
+  const blog = await Blog.findById(request.params.id)
+
+  if (!blog) {
+    return response.status(404).end()
+  }
+
+  // STEP 4.21: only owner can delete
+  if (blog.user.toString() !== decodedToken.id.toString()) {
+    return response.status(403).json({ error: 'not authorized to delete this blog' })
+  }
+
   await Blog.findByIdAndDelete(request.params.id)
+
   response.status(204).end()
 })
 
-/* UPDATE BLOG */
 blogsRouter.put('/:id', async (request, response) => {
   const body = request.body
 
