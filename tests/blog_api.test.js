@@ -17,30 +17,27 @@ beforeEach(async () => {
   await Blog.deleteMany({})
   await User.deleteMany({})
 
-  // create user
-  const user = await api.post('/api/users').send({
+  await api.post('/api/users').send({
     username: 'root',
     name: 'Superuser',
-    password: 'sekret',
+    password: 'sekret'
   })
 
-  // login to get token
-  const loginRes = await api.post('/api/login').send({
+  const loginResponse = await api.post('/api/login').send({
     username: 'root',
-    password: 'sekret',
+    password: 'sekret'
   })
 
-  token = loginRes.body.token
+  token = loginResponse.body.token
 
-  // create initial blogs
   const userInDb = await User.findOne({ username: 'root' })
 
-  const blogObjects = helper.initialBlogs.map(blog => {
-    return new Blog({
+  const blogObjects = helper.initialBlogs.map(blog =>
+    new Blog({
       ...blog,
-      user: userInDb._id,
+      user: userInDb._id
     })
-  })
+  )
 
   await Blog.insertMany(blogObjects)
 })
@@ -55,23 +52,29 @@ describe('when there are initially some blogs saved', () => {
 
   test('all blogs are returned', async () => {
     const response = await api.get('/api/blogs')
-    assert.strictEqual(response.body.length, helper.initialBlogs.length)
+
+    assert.strictEqual(
+      response.body.length,
+      helper.initialBlogs.length
+    )
   })
 
   test('blogs have id field instead of _id', async () => {
     const response = await api.get('/api/blogs')
-    assert(response.body[0].id)
-    assert.strictEqual(response.body[0]._id, undefined)
+
+    const blog = response.body[0]
+
+    assert(blog.id)
+    assert.strictEqual(blog._id, undefined)
   })
 
   describe('addition of a new blog', () => {
-
     test('succeeds with valid data', async () => {
       const newBlog = {
         title: 'Async Await Testing',
         author: 'Zach',
         url: 'www.async.com',
-        likes: 15,
+        likes: 15
       }
 
       await api
@@ -79,16 +82,21 @@ describe('when there are initially some blogs saved', () => {
         .set('Authorization', `Bearer ${token}`)
         .send(newBlog)
         .expect(201)
+        .expect('Content-Type', /application\/json/)
 
-      const blogsAtEnd = await Blog.find({})
-      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
+      const blogsAtEnd = await helper.blogsInDb()
+
+      assert.strictEqual(
+        blogsAtEnd.length,
+        helper.initialBlogs.length + 1
+      )
     })
 
     test('if likes property is missing, it defaults to 0', async () => {
       const newBlog = {
         title: 'No Likes Blog',
         author: 'Zach',
-        url: 'www.nolikes.com',
+        url: 'www.nolikes.com'
       }
 
       const response = await api
@@ -104,7 +112,7 @@ describe('when there are initially some blogs saved', () => {
       const newBlog = {
         author: 'Zach',
         url: 'www.test.com',
-        likes: 10,
+        likes: 10
       }
 
       await api
@@ -118,7 +126,7 @@ describe('when there are initially some blogs saved', () => {
       const newBlog = {
         title: 'Missing URL Blog',
         author: 'Zach',
-        likes: 10,
+        likes: 10
       }
 
       await api
@@ -126,6 +134,20 @@ describe('when there are initially some blogs saved', () => {
         .set('Authorization', `Bearer ${token}`)
         .send(newBlog)
         .expect(400)
+    })
+
+    test('fails with status 401 if token is not provided', async () => {
+      const newBlog = {
+        title: 'Unauthorized Blog',
+        author: 'Zach',
+        url: 'www.unauthorized.com',
+        likes: 5
+      }
+
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(401)
     })
   })
 })

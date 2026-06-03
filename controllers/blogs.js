@@ -2,7 +2,6 @@ const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const userExtractor = require('../utils/userExtractor')
 
-/* GET all blogs (PUBLIC) */
 blogsRouter.get('/', async (request, response) => {
   const blogs = await Blog.find({}).populate('user', {
     username: 1,
@@ -12,13 +11,14 @@ blogsRouter.get('/', async (request, response) => {
   response.json(blogs)
 })
 
-/* CREATE BLOG (PROTECTED) */
 blogsRouter.post('/', userExtractor, async (request, response) => {
   const body = request.body
   const user = request.user
 
   if (!body.title || !body.url) {
-    return response.status(400).json({ error: 'title or url missing' })
+    return response.status(400).json({
+      error: 'title or url missing'
+    })
   }
 
   const blog = new Blog({
@@ -37,7 +37,6 @@ blogsRouter.post('/', userExtractor, async (request, response) => {
   response.status(201).json(savedBlog)
 })
 
-/* DELETE BLOG (ONLY OWNER CAN DELETE) */
 blogsRouter.delete('/:id', userExtractor, async (request, response) => {
   const user = request.user
 
@@ -47,18 +46,17 @@ blogsRouter.delete('/:id', userExtractor, async (request, response) => {
     return response.status(404).end()
   }
 
-  // IMPORTANT: compare object id with string
   if (blog.user.toString() !== user._id.toString()) {
     return response.status(403).json({
-      error: 'only the creator can delete this blog'
+      error: 'only creator can delete a blog'
     })
   }
 
   await Blog.findByIdAndDelete(request.params.id)
+
   response.status(204).end()
 })
 
-/* UPDATE BLOG */
 blogsRouter.put('/:id', async (request, response) => {
   const body = request.body
 
@@ -70,12 +68,12 @@ blogsRouter.put('/:id', async (request, response) => {
       url: body.url,
       likes: body.likes
     },
-    { new: true, runValidators: true }
+    {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    }
   )
-
-  if (!updatedBlog) {
-    return response.status(404).end()
-  }
 
   response.json(updatedBlog)
 })
