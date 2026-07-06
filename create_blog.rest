@@ -1,28 +1,18 @@
-
+### Get all blogs
 GET http://localhost:3003/api/blogs
-Content-Type: application/json
 
 ###
 
-POST http://localhost:3003/api/users
+### Like a blog
+PUT http://localhost:3003/api/blogs/6a44d07e5ee37e9affbe22b5
 Content-Type: application/json
 
 {
-  "username": "chengun",
-  "name": "cheeese",
-  "password": "123456"
+    "title": "how to live good life",
+    "author": "Joel Spolsky",
+    "url": "https://www.joelonsoftware.com/2000/08/09/the-joel-test-12-steps-to-better-code/",
+    "likes": 1,
+    "user": "chengun"
 }
 
-### Login
-   POST http://localhost:3003/api/login
-   Content-Type: application/json
-
-   {
-       "username": "chengun",
-       "password": "123456"
-   }
-
 ###
-
-DELETE http://localhost:3003/api/blogs/6a159094a956585daf52d45b
-Content-Type: application/json
